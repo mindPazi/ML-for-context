@@ -52,36 +52,6 @@ def test_add_documents_without_metadata():
     assert store.metadata == [{}, {}]
 
 
-def test_search():
-    store = VectorStore(embedding_dim=3)
-    
-    docs = ["identical", "similar", "different"]
-    embeddings = np.array([
-        [1.0, 0.0, 0.0],
-        [0.9, 0.1, 0.0],
-        [0.0, 0.0, 1.0]
-    ])
-    
-    embeddings = embeddings / np.linalg.norm(embeddings, axis=1, keepdims=True)
-    
-    store.add_documents(docs, embeddings)
-    
-    query = np.array([1.0, 0.0, 0.0])
-    query = query / np.linalg.norm(query)
-    
-    results = store.search(query, top_k=2)
-    
-    assert len(results) == 2
-    assert results[0]["text"] == "identical"
-    assert results[1]["text"] == "similar"
-    assert results[0]["score"] > results[1]["score"]
-
-
-def test_search_empty_store():
-    store = VectorStore()
-    query = np.array([1.0, 0.0, 0.0])
-    results = store.search(query)
-    assert results == []
 
 
 def test_delete_collection():

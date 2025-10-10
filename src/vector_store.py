@@ -31,24 +31,6 @@ class VectorStore:
         
         return len(documents)
     
-    def search(self, query_embedding: np.ndarray, top_k: int = 10) -> List[Dict[str, Any]]:
-        if self.embeddings is None or len(self.embeddings) == 0:
-            return []
-        
-        similarities = np.dot(self.embeddings, query_embedding)
-        top_indices = np.argsort(similarities)[-top_k:][::-1]
-        
-        results = []
-        for idx in top_indices:
-            result = {
-                "id": self.ids[idx],
-                "text": self.documents[idx],
-                "score": float(similarities[idx]),
-                "metadata": self.metadata[idx]
-            }
-            results.append(result)
-        
-        return results
     
     def delete_collection(self):
         self.documents = []
