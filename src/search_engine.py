@@ -49,3 +49,9 @@ class SearchEngine:
     
     def info(self) -> Dict:
         return self.vector_store.get_collection_info()
+    
+    def save(self, path: str):
+        self.vector_store.save(path)
+    
+    def load(self, path: str):
+        self.vector_store.load(path)

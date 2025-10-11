@@ -1,6 +1,7 @@
 from typing import List, Dict, Any, Optional
 import numpy as np
 import uuid
+import os
 
 
 class VectorStore:
@@ -45,3 +46,20 @@ class VectorStore:
             "embedding_dim": self.embedding_dim,
             "has_embeddings": self.embeddings is not None
         }
+    
+    def save(self, path: str):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        np.savez(
+            path,
+            embeddings=self.embeddings,
+            documents=self.documents,
+            ids=self.ids,
+            metadata=self.metadata
+        )
+    
+    def load(self, path: str):
+        data = np.load(path, allow_pickle=True)
+        self.embeddings = data['embeddings']
+        self.documents = data['documents'].tolist()
+        self.ids = data['ids'].tolist()
+        self.metadata = data['metadata'].tolist()
