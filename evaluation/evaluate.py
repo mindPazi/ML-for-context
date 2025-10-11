@@ -11,20 +11,11 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
-def load_dataset(split: str = "test"):
-    loader = CoSQALoader()
-    corpus, queries, relevance = loader.load(split=split)
-
-    log.info(f"      ├─ Corpus size: {len(corpus)}")
-    log.info(f"      └─ Queries: {len(queries)}")
-    return corpus, queries, relevance
-
-
 def index_corpus(search_engine: SearchEngine, corpus: List[str]):
     search_engine.index_documents(corpus, show_progress=True)
 
 
-def run_queries(search_engine: SearchEngine, queries: List[Dict], corpus: List[str], top_k: int = 10):
+def run(search_engine: SearchEngine, queries: List[Dict], corpus: List[str], top_k: int = 10):
     results = {}
     for query in queries:
         query_id = query["query_id"]
@@ -69,7 +60,10 @@ def main():
     log.info("="*50)
     
     log.info("\n[1/5] Loading dataset...")
-    corpus, queries, relevance = load_dataset(split="test")
+    loader = CoSQALoader()
+    corpus, queries, relevance = loader.load(split="test")
+    log.info(f"      ├─ Corpus size: {len(corpus)}")
+    log.info(f"      └─ Queries: {len(queries)}")
     
     log.info("\n[2/5] Initializing search engine...")
     search_engine = SearchEngine()
@@ -78,7 +72,7 @@ def main():
     index_corpus(search_engine, corpus)
     
     log.info("\n[4/5] Running queries...")
-    results = run_queries(search_engine, queries, corpus, top_k=10)
+    results = run(search_engine, queries, corpus, top_k=10)
     
     log.info("\n[5/5] Calculating metrics...")
     metrics = calculate_metrics(results, relevance)
