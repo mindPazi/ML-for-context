@@ -35,7 +35,7 @@ class SearchEngine:
         results = []
         for idx in top_indices:
             result = {
-                "id": self.vector_store.ids[idx],
+                "id": int(idx),
                 "text": self.vector_store.documents[idx],
                 "score": float(similarities[idx]),
                 "metadata": self.vector_store.metadata[idx]

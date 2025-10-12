@@ -44,13 +44,13 @@ def index_corpus(search_engine: SearchEngine, corpus: List[str]):
     search_engine.index_documents(corpus, show_progress=True)
 
 
-def run_queries(search_engine: SearchEngine, queries: List[Dict], corpus: List[str], top_k: int = 10):
+def run(search_engine: SearchEngine, queries: List[Dict], top_k: int = 10):
     results = {}
     for query in queries:
         query_id = query["query_id"]
         query_text = query["query_text"]
         search_results = search_engine.search(query_text, top_k=top_k)
-        retrieved_indices = [corpus.index(r["text"]) for r in search_results]
+        retrieved_indices = [r["id"] for r in search_results]
         results[query_id] = retrieved_indices
     return results
 
@@ -104,7 +104,7 @@ def main():
     index_corpus(search_engine, corpus)
     
     log.info("\n[4/5] Running queries...")
-    results = run_queries(search_engine, queries, corpus, top_k=10)
+    results = run(search_engine, queries, top_k=10)
     
     log.info("\n[5/5] Calculating metrics...")
     metrics = calculate_metrics(results, relevance)
