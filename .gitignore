@@ -8,6 +8,8 @@ env/
 __pycache__/
 *.py[cod]
 *$py.class
+
+cache/
 *.so
 .Python
 build/
@@ -35,6 +37,7 @@ wheels/
 
 # Project specific
 data/
+models/
 *.db
 *.sqlite
 *.log
