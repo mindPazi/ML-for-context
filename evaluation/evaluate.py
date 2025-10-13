@@ -3,6 +3,9 @@ from evaluation.cosqa_loader import CoSQALoader
 from evaluation.metrics import recall_at_k, mrr_at_k, ndcg_at_k
 from typing import Dict, List
 import logging
+import argparse
+import os
+import hashlib
 
 logging.basicConfig(
     level=logging.INFO,
@@ -11,8 +14,27 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
-def index_corpus(search_engine: SearchEngine, corpus: List[str]):
-    search_engine.index_documents(corpus, show_progress=True)
+def get_cache_path(model_name: str, corpus_size: int) -> str:
+    cache_dir = "./cache/embeddings"
+    os.makedirs(cache_dir, exist_ok=True)
+    model_hash = hashlib.md5(model_name.encode()).hexdigest()[:8]
+    cache_file = f"{cache_dir}/corpus_{corpus_size}_{model_hash}.pkl"
+    return cache_file
+
+
+def index_corpus(search_engine: SearchEngine, corpus: List[str], model_name: str):
+    cache_path = get_cache_path(model_name, len(corpus))
+    
+    if os.path.exists(cache_path):
+        log.info(f"      Loading from cache: {cache_path}")
+        search_engine.load(cache_path)
+        log.info(f"      ✓ Loaded {len(corpus)} documents from cache")
+    else:
+        log.info(f"      Computing embeddings...")
+        search_engine.index_documents(corpus, show_progress=True)
+        log.info(f"      Saving to cache: {cache_path}")
+        search_engine.save(cache_path)
+        log.info(f"      ✓ Cache saved")
 
 
 def run(search_engine: SearchEngine, queries: List[Dict], top_k: int = 10):
@@ -55,21 +77,50 @@ def print_results(metrics: Dict):
 
 
 def main():
+    
+    
+    parser = argparse.ArgumentParser(description="Evaluate embedding model on CoSQA dataset")
+    parser.add_argument(
+        "--model",
+        type=str,
+        default="microsoft/unixcoder-base",
+        help="Model to evaluate (base model name or path to fine-tuned model)"
+    )
+    parser.add_argument(
+        "--test-subset",
+        type=float,
+        default=1.0,
+        help="Fraction of test queries to evaluate (0.0-1.0). Default: 1.0 (100%%)"
+    )
+    args = parser.parse_args()
+    
     log.info("\n" + "="*50)
     log.info("CoSQA EVALUATION PIPELINE".center(50))
     log.info("="*50)
+    log.info(f"\nModel: {args.model}")
     
     log.info("\n[1/5] Loading dataset...")
     loader = CoSQALoader()
     corpus, queries, relevance = loader.load(split="test")
     log.info(f"      ├─ Corpus size: {len(corpus)}")
-    log.info(f"      └─ Queries: {len(queries)}")
+    log.info(f"      └─ Total queries: {len(queries)}")
+    
+    if args.test_subset < 1.0:
+        import random
+        random.seed(42)
+        total_queries = len(queries)
+        subset_size = int(total_queries * args.test_subset)
+        random.shuffle(queries)
+        queries = queries[:subset_size]
+        query_ids = {q["query_id"] for q in queries}
+        relevance = {qid: docs for qid, docs in relevance.items() if qid in query_ids}
+        log.info(f"      └─ Using {args.test_subset*100:.0f}% of queries: {len(queries)}/{total_queries}")
     
     log.info("\n[2/5] Initializing search engine...")
-    search_engine = SearchEngine()
+    search_engine = SearchEngine(model_name=args.model)
     
     log.info("\n[3/5] Indexing corpus...")
-    index_corpus(search_engine, corpus)
+    index_corpus(search_engine, corpus, args.model)
     
     log.info("\n[4/5] Running queries...")
     results = run(search_engine, queries, top_k=10)

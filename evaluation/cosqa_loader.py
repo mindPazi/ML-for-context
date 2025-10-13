@@ -3,7 +3,7 @@ from typing import List, Dict, Tuple
 
 
 class CoSQALoader:
-    def load(self, split: str = "test") -> Tuple[List[str], List[Dict], Dict]:
+    def load(self, split: str = "train") -> Tuple[List[str], List[Dict], Dict]:
         
         qrels = load_dataset("CoIR-Retrieval/cosqa", split=split)
         corpus_ds = load_dataset("CoIR-Retrieval/cosqa", "corpus")["corpus"]

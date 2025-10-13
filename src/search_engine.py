@@ -5,20 +5,28 @@ from .vector_store import VectorStore
 
 
 class SearchEngine:
-    def __init__(self):
-        self.embedding_model = EmbeddingModel()
+    def __init__(
+        self, 
+        model_name: str = "microsoft/unixcoder-base",
+        max_seq_length: int = 256,
+        device: Optional[str] = None
+    ):
+        self.embedding_model = EmbeddingModel(
+            model_name=model_name,
+            max_seq_length=max_seq_length,
+            device=device
+        )
         self.vector_store = VectorStore(embedding_dim=self.embedding_model.get_embedding_dim())
     
     def index_documents(
         self, 
         documents: List[str], 
         metadata: Optional[List[Dict]] = None,
-        batch_size: int = 32,
         show_progress: bool = False
     ) -> int:
         embeddings = self.embedding_model.encode(
             documents, 
-            batch_size=batch_size,
+            batch_size=32,
             show_progress_bar=show_progress
         )
         return self.vector_store.add_documents(documents, embeddings, metadata)
@@ -27,7 +35,7 @@ class SearchEngine:
         if self.vector_store.embeddings is None or len(self.vector_store.embeddings) == 0:
             return []
         
-        query_embedding = self.embedding_model.encode(query, show_progress_bar=False)
+        query_embedding = self.embedding_model.encode(query, batch_size=1, show_progress_bar=False)
         
         similarities = np.dot(self.vector_store.embeddings, query_embedding)
         top_indices = np.argsort(similarities)[-top_k:][::-1]

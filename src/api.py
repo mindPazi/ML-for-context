@@ -2,9 +2,17 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 from .search_engine import SearchEngine
+from training.config import TrainingConfig
 import uvicorn
+
 app = FastAPI()
-engine = SearchEngine()
+
+config = TrainingConfig()
+engine = SearchEngine(
+    model_name=config.base_model_name,
+    max_seq_length=config.max_seq_length,
+    device=None
+)
 
 
 class IndexRequest(BaseModel):
