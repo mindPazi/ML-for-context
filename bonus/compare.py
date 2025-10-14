@@ -1,19 +1,25 @@
 import json
-import os
 
 
-def compare_results():
-    print("\n" + "="*60)
-    print("BONUS EXPERIMENTS COMPARISON")
-    print("="*60)
+def load_results():
+    pass
+
+def print_bonus1_comparison():
+    pass
+
+def print_bonus2_comparison():
+    pass
+
+
+def main():
+    print_bonus1_comparison()
+    print_bonus2_comparison()
     
-    # TODO: Load all JSON results from bonus/results/
-    # TODO: Create comparison table
-    # TODO: Generate plots with matplotlib
-    # TODO: Save report to bonus/results/report.md
-    
-    print("\nTODO: Implement comparison logic")
+    print("="*80)
+    print("SUMMARY".center(80))
+    print("="*80)
+    print()
 
 
 if __name__ == "__main__":
-    compare_results()
+    main()
