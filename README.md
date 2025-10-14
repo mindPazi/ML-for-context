@@ -154,6 +154,21 @@ Average of reciprocal ranks of first relevant document. Rewards relevant docs ap
 ### NDCG@10 (Normalized Discounted Cumulative Gain)
 Accounts for position and number of relevant documents. Logarithmic discount for lower positions.
 
+## Bonus Experiments
+
+Additional experiments in `bonus/` directory:
+
+```bash
+# Bonus 1: Function names vs whole bodies
+python bonus/bonus1.py
+
+# Bonus 2: Vector storage metrics comparison
+python bonus/bonus2.py
+
+# Compare all results
+python bonus/compare.py
+```
+
 ## API Usage (Optional)
 
 Start the FastAPI server:
