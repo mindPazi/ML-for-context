@@ -6,6 +6,7 @@ import json
 import torch
 import pickle
 from sentence_transformers import SentenceTransformer
+import hashlib
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -47,10 +48,10 @@ class SearchEngineWithMetric(SearchEngine):
         
         if self.similarity_metric == "cosine":
             if self.normalize:
-                # For normalized embeddings, cosine similarity = dot product
+                
                 scores = np.dot(self.vector_store.embeddings, query_embedding)
             else:
-                # For unnormalized embeddings, compute cosine similarity manually
+                
                 doc_norms = np.linalg.norm(self.vector_store.embeddings, axis=1)
                 query_norm = np.linalg.norm(query_embedding)
                 scores = np.dot(self.vector_store.embeddings, query_embedding) / (doc_norms * query_norm)
@@ -113,9 +114,12 @@ def get_or_create_model(model_path: str):
 
 
 def get_or_create_embeddings(corpus: List[str], model_path: str, normalize: bool) -> np.ndarray:
-    os.makedirs(CACHE_DIR, exist_ok=True)
-    norm_str = "normalized" if normalize else "unnormalized"
-    cache_file = os.path.join(CACHE_DIR, f'embeddings_{norm_str}.pkl')
+    cache_dir = './cache/embeddings'
+    os.makedirs(cache_dir, exist_ok=True)
+    
+    
+    norm_str = "normalized" if normalize else "notnormalized"
+    cache_file = os.path.join(cache_dir, f'embeddings_finetuned_{norm_str}.pkl.npz')
     
     if os.path.exists(cache_file):
         print(f"      Loading embeddings from disk cache for normalize={normalize}...")

@@ -14,16 +14,23 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
-def get_cache_path(model_name: str, corpus_size: int) -> str:
+def get_cache_path(model_name: str, corpus_size: int, normalize: bool = True) -> str:
     cache_dir = "./cache/embeddings"
     os.makedirs(cache_dir, exist_ok=True)
-    model_hash = hashlib.md5(model_name.encode()).hexdigest()[:8]
-    cache_file = f"{cache_dir}/corpus_{corpus_size}_{model_hash}.pkl"
+    
+    
+    if "microsoft/unixcoder-base" in model_name:
+        cache_file = f"{cache_dir}/embedding_base.pkl.npz"
+    else:
+        
+        norm_str = "normalized" if normalize else "notnormalized"
+        cache_file = f"{cache_dir}/embeddings_finetuned_{norm_str}.pkl.npz"
+    
     return cache_file
 
 
-def index_corpus(search_engine: SearchEngine, corpus: List[str], model_name: str):
-    cache_path = get_cache_path(model_name, len(corpus))
+def index_corpus(search_engine: SearchEngine, corpus: List[str], model_name: str, normalize: bool = True):
+    cache_path = get_cache_path(model_name, len(corpus), normalize)
     
     if os.path.exists(cache_path):
         log.info(f"      Loading from cache: {cache_path}")
@@ -120,7 +127,8 @@ def main():
     search_engine = SearchEngine(model_name=args.model)
     
     log.info("\n[3/5] Indexing corpus...")
-    index_corpus(search_engine, corpus, args.model)
+    
+    index_corpus(search_engine, corpus, args.model, normalize=True)
     
     log.info("\n[4/5] Running queries...")
     results = run(search_engine, queries, top_k=10)

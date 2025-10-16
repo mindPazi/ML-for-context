@@ -37,15 +37,16 @@ class SearchEngine:
         
         query_embedding = self.embedding_model.encode(query, batch_size=1, show_progress_bar=False)
         
-        similarities = np.dot(self.vector_store.embeddings, query_embedding)
-        top_indices = np.argsort(similarities)[-top_k:][::-1]
+        
+        distances = np.sum(np.abs(self.vector_store.embeddings - query_embedding), axis=1)
+        top_indices = np.argsort(distances)[:top_k]  
         
         results = []
         for idx in top_indices:
             result = {
                 "id": int(idx),
                 "text": self.vector_store.documents[idx],
-                "score": float(similarities[idx]),
+                "score": float(distances[idx]),  
                 "metadata": self.vector_store.metadata[idx]
             }
             results.append(result)
