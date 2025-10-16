@@ -8,7 +8,7 @@ print("=" * 60)
 
 
 print("\n[1/3] Loading embeddings from cache...")
-with open('cache/embeddings_normalized.pkl', 'rb') as f:
+with open('cache/embeddings/embeddings_finetuned_normalized.pkl.npz', 'rb') as f:
     embeddings = pickle.load(f)
 
 print(f"      Shape: {embeddings.shape}")
