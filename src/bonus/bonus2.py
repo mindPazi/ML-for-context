@@ -8,12 +8,12 @@ import pickle
 from sentence_transformers import SentenceTransformer
 import hashlib
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from src.search_engine import SearchEngine
 from src.embeddings import EmbeddingModel
 from src.vector_store import VectorStore
-from evaluation.cosqa_loader import CoSQALoader
+from src.evaluation.cosqa_loader import CoSQALoader
 
 
 class SearchEngineWithMetric(SearchEngine):
@@ -46,32 +46,36 @@ class SearchEngineWithMetric(SearchEngine):
         
         query_embedding = self.embedding_model.encode(query, normalize=self.normalize)
         
-        if self.similarity_metric == "cosine":
+        
+        if self.similarity_metric == "manhattan":
+            distances = np.sum(np.abs(self.vector_store.embeddings - query_embedding), axis=1)
+            top_indices = np.argsort(distances)[:top_k]
+        elif self.similarity_metric == "euclidean":
+            distances = np.linalg.norm(self.vector_store.embeddings - query_embedding, axis=1)
+            top_indices = np.argsort(distances)[:top_k]
+        elif self.similarity_metric == "cosine":
             if self.normalize:
-                
                 scores = np.dot(self.vector_store.embeddings, query_embedding)
             else:
-                
                 doc_norms = np.linalg.norm(self.vector_store.embeddings, axis=1)
                 query_norm = np.linalg.norm(query_embedding)
                 scores = np.dot(self.vector_store.embeddings, query_embedding) / (doc_norms * query_norm)
-        elif self.similarity_metric == "euclidean":
-            distances = np.linalg.norm(self.vector_store.embeddings - query_embedding, axis=1)
-            scores = 1 / (1 + distances)
-        elif self.similarity_metric == "manhattan":
-            distances = np.sum(np.abs(self.vector_store.embeddings - query_embedding), axis=1)
-            scores = 1 / (1 + distances)
+            top_indices = np.argsort(scores)[-top_k:][::-1]
         elif self.similarity_metric == "dot_product":
             scores = np.dot(self.vector_store.embeddings, query_embedding)
-        
-        top_indices = np.argsort(scores)[-top_k:][::-1]
+            top_indices = np.argsort(scores)[-top_k:][::-1]
         
         results = []
         for idx in top_indices:
+            if self.similarity_metric in ["euclidean", "manhattan"]:
+                score_value = float(distances[idx])
+            else:
+                score_value = float(scores[idx])
+            
             result = {
                 "id": int(idx),
                 "text": self.vector_store.documents[idx],
-                "score": float(scores[idx]),
+                "score": score_value,
                 "metadata": self.vector_store.metadata[idx]
             }
             results.append(result)
@@ -242,8 +246,8 @@ def run_all_metrics():
                 print(f"Error evaluating {key}: {e}")
                 results[key] = {"error": str(e)}
     
-    os.makedirs('bonus/results', exist_ok=True)
-    output_path = 'bonus/results/similarity_metrics.json'
+    os.makedirs('src/bonus/results', exist_ok=True)
+    output_path = 'src/bonus/results/similarity_metrics.json'
     with open(output_path, 'w') as f:
         json.dump(results, f, indent=2)
     

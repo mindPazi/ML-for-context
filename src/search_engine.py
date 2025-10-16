@@ -39,14 +39,14 @@ class SearchEngine:
         
         
         distances = np.sum(np.abs(self.vector_store.embeddings - query_embedding), axis=1)
-        top_indices = np.argsort(distances)[:top_k]  
+        top_indices = np.argsort(distances)[:top_k]
         
         results = []
         for idx in top_indices:
             result = {
                 "id": int(idx),
                 "text": self.vector_store.documents[idx],
-                "score": float(distances[idx]),  
+                "score": float(distances[idx]),
                 "metadata": self.vector_store.metadata[idx]
             }
             results.append(result)

@@ -1,11 +1,16 @@
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+
 from src.search_engine import SearchEngine
-from evaluation.cosqa_loader import CoSQALoader
-from evaluation.metrics import recall_at_k, mrr_at_k, ndcg_at_k
+from src.evaluation.cosqa_loader import CoSQALoader
+from src.evaluation.metrics import recall_at_k, mrr_at_k, ndcg_at_k
 from typing import Dict, List
 import logging
 import argparse
 import os
 import hashlib
+import pickle
 
 logging.basicConfig(
     level=logging.INFO,
@@ -34,13 +39,19 @@ def index_corpus(search_engine: SearchEngine, corpus: List[str], model_name: str
     
     if os.path.exists(cache_path):
         log.info(f"      Loading from cache: {cache_path}")
-        search_engine.load(cache_path)
+        with open(cache_path, 'rb') as f:
+            embeddings = pickle.load(f)
+        search_engine.vector_store.embeddings = embeddings
+        search_engine.vector_store.documents = corpus
+        search_engine.vector_store.metadata = [{"doc_id": i} for i in range(len(corpus))]
         log.info(f"      ✓ Loaded {len(corpus)} documents from cache")
     else:
         log.info(f"      Computing embeddings...")
         search_engine.index_documents(corpus, show_progress=True)
+        
         log.info(f"      Saving to cache: {cache_path}")
-        search_engine.save(cache_path)
+        with open(cache_path, 'wb') as f:
+            pickle.dump(search_engine.vector_store.embeddings, f)
         log.info(f"      ✓ Cache saved")
 
 
