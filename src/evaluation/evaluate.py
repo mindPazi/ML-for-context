@@ -26,10 +26,14 @@ def get_cache_path(model_name: str, corpus_size: int, normalize: bool = True) ->
     
     if "microsoft/unixcoder-base" in model_name:
         cache_file = f"{cache_dir}/embedding_base.pkl.npz"
-    else:
-        
+    elif "./models/unixcoder-finetuned" in model_name or "unixcoder-finetuned" in model_name:
         norm_str = "normalized" if normalize else "notnormalized"
         cache_file = f"{cache_dir}/embeddings_finetuned_{norm_str}.pkl.npz"
+    else:
+        
+        model_hash = hashlib.md5(model_name.encode()).hexdigest()[:8]
+        norm_str = "normalized" if normalize else "notnormalized"
+        cache_file = f"{cache_dir}/embeddings_{model_hash}_{norm_str}.pkl.npz"
     
     return cache_file
 
