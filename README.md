@@ -16,27 +16,42 @@ A semantic code search engine using embedding models, with support for fine-tuni
 ML-for-context/
 ├── README.md
 ├── requirements.txt
-├── src/                           # Core search engine (reusable)
-│   ├── __init__.py
-│   ├── embeddings.py             # Embedding model wrapper
-│   ├── search_engine.py          # Search engine with vector retrieval
-│   ├── vector_store.py           # In-memory vector storage
-│   └── api.py                    # FastAPI endpoints
-├── evaluation/                    # Evaluation pipeline
-│   ├── cosqa_loader.py           # CoSQA dataset loader
-│   ├── metrics.py                # Ranking metrics (Recall, MRR, NDCG)
-│   └── evaluate.py               # Evaluation script
-├── training/                      # Fine-tuning infrastructure
-│   ├── __init__.py
-│   ├── config.py                 # Training configuration
-│   ├── data_preparation.py       # Data preparation for fine-tuning
-│   └── train.py                  # Fine-tuning script
-├── tests/
-│   ├── unit/                     # Unit tests
-│   └── integration/              # Integration tests
-│       ├── test_evaluate_subset.py
-│       └── test_evaluate_finetuned.py
-└── models/                        # Fine-tuned models (gitignored)
+├── report.ipynb                   # Complete analysis notebook
+├── cache/                         # Cached embeddings (gitignored)
+├── models/                        # Fine-tuned models (gitignored)  
+└── src/                           # Source code
+    ├── __init__.py
+    ├── embeddings.py              # Embedding model wrapper
+    ├── search_engine.py           # Search engine with vector retrieval
+    ├── vector_store.py            # In-memory vector storage
+    ├── api.py                     # FastAPI endpoints
+    ├── evaluation/                # Evaluation pipeline
+    │   ├── cosqa_loader.py        # CoSQA dataset loader
+    │   ├── metrics.py             # Ranking metrics (Recall, MRR, NDCG)
+    │   └── evaluate.py            # Evaluation script
+    ├── training/                  # Fine-tuning infrastructure
+    │   ├── __init__.py
+    │   ├── config.py              # Training configuration
+    │   ├── data_preparation.py    # Data preparation for fine-tuning
+    │   ├── train.py               # Fine-tuning script
+    │   ├── plot_training.py       # Training visualization
+    │   └── results/               # Training results and plots
+    ├── bonus/                     # Bonus experiments
+    │   ├── bonus1.py              # Function names only evaluation
+    │   ├── bonus2.py              # Similarity metrics comparison
+    │   ├── analyze_embeddings.py  # Anisotropy analysis
+    │   ├── compare.py             # Results comparison
+    │   ├── extractor.py           # Function name extraction
+    │   └── results/               # Experiment results
+    └── tests/                     # Test suite
+        ├── unit/                  # Unit tests
+        │   ├── test_api.py
+        │   ├── test_cosqa_loader.py
+        │   ├── test_metrics.py
+        │   ├── test_search_engine.py
+        │   └── test_vector_store.py
+        └── integration/           # Integration tests
+            └── test_evaluate_finetuned.py
 ```
 
 ## Requirements
@@ -66,25 +81,25 @@ pip install -r requirements.txt
 Evaluate the pre-trained UniXcoder model on CoSQA test set:
 
 ```bash
-python -m evaluation.evaluate --model microsoft/unixcoder-base
+python -m src.evaluation.evaluate --model microsoft/unixcoder-base
 ```
 
-Expected results (base model):
-- Recall@10: ~0.29 (29% of queries find relevant doc in top 10)
-- MRR@10: ~0.13
-- NDCG@10: ~0.17
+Baseline results (Manhattan distance with normalized embeddings):
+- Recall@10: 0.2220 (22.2% of queries find relevant doc in top 10)
+- MRR@10: 0.0890
+- NDCG@10: 0.1197
 
 ### 2. Fine-tune Model
 
 Fine-tune the model on CoSQA training data to improve performance:
 
 ```bash
-python -m training.train
+python -m src.training.train
 ```
 
 Optional arguments:
 ```bash
-python -m training.train \
+python -m src.training.train \
   --base-model microsoft/unixcoder-base \
   --output-path ./models/unixcoder-finetuned \
   --batch-size 16 \
@@ -105,24 +120,25 @@ Compare fine-tuned model against base model:
 
 ```bash
 # Evaluate fine-tuned model
-python -m evaluation.evaluate --model ./models/unixcoder-finetuned
+python -m src.evaluation.evaluate --model ./models/unixcoder-finetuned
 
 # Or run comparison test
-python -m tests.integration.test_evaluate_finetuned
+python -m src.tests.integration.test_evaluate_finetuned
 ```
 
-Expected improvement:
-- Recall@10: 0.29 → 0.50-0.65 (50-65% of queries successful)
-- Significant improvements in MRR and NDCG as well
+Fine-tuned results (Manhattan distance with normalized embeddings):
+- Recall@10: 0.4260 (+92% improvement over baseline)
+- MRR@10: 0.1621 (+82% improvement)
+- NDCG@10: 0.2234 (+87% improvement)
 
 ### 4. Run Integration Tests
 
 ```bash
-# Test on subset (quick validation)
-python -m tests.integration.test_evaluate_subset
-
 # Test fine-tuned vs base model comparison
-python -m tests.integration.test_evaluate_finetuned
+python -m src.tests.integration.test_evaluate_finetuned
+
+# Run all unit tests
+python -m pytest src/tests/unit/
 ```
 
 ## Model Architecture
