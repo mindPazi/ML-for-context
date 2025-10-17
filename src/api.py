@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 from .search_engine import SearchEngine
-from training.config import TrainingConfig
+from .training.config import TrainingConfig
 import uvicorn
 
 app = FastAPI()

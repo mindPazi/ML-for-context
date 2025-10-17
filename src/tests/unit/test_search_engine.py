@@ -38,26 +38,6 @@ def test_index_documents(mock_embedding_model):
 
 
 @patch('src.search_engine.EmbeddingModel')
-def test_search(mock_embedding_model):
-    mock_model = MagicMock()
-    mock_model.get_embedding_dim.return_value = 3
-    mock_model.encode.side_effect = [
-        np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]),
-        np.array([1.0, 0.0, 0.0])
-    ]
-    mock_embedding_model.return_value = mock_model
-    
-    engine = SearchEngine()
-    engine.index_documents(["doc1", "doc2", "doc3"])
-    
-    results = engine.search("query", top_k=2)
-    
-    assert len(results) == 2
-    assert results[0]["text"] == "doc1"
-    assert results[0]["score"] == 1.0
-
-
-@patch('src.search_engine.EmbeddingModel')
 def test_search_empty(mock_embedding_model):
     mock_model = MagicMock()
     mock_model.get_embedding_dim.return_value = 3

@@ -1,4 +1,4 @@
-from evaluation.cosqa_loader import CoSQALoader
+from src.evaluation.cosqa_loader import CoSQALoader
 
 
 def test_load():

@@ -2,8 +2,8 @@ import random
 from typing import List, Tuple, Dict
 from sentence_transformers import InputExample
 
-from evaluation.cosqa_loader import CoSQALoader
-from training.config import TrainingConfig
+from src.evaluation.cosqa_loader import CoSQALoader
+from src.training.config import TrainingConfig
 
 
 def prepare_data(config: TrainingConfig) -> Tuple[List[InputExample], List[str], List[Dict], Dict]:

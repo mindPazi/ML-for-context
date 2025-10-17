@@ -154,19 +154,52 @@ Average of reciprocal ranks of first relevant document. Rewards relevant docs ap
 ### NDCG@10 (Normalized Discounted Cumulative Gain)
 Accounts for position and number of relevant documents. Logarithmic discount for lower positions.
 
-## Bonus Experiments
+## Bonus Experiments & Analysis
 
-Additional experiments in `bonus/` directory:
+The `report.ipynb` notebook contains comprehensive experiments and analysis:
 
+### Bonus 1: Function Names Only
+Evaluates search performance using only extracted function names instead of full code bodies:
+- Recall@10: 0.1560 (vs 0.4260 with full code)
+- Demonstrates importance of full code context
+
+### Bonus 2: Similarity Metrics Comparison
+Compares different distance metrics with normalized/unnormalized embeddings:
+- **Best**: Manhattan distance with normalized embeddings (Recall@10: 0.4260)
+- Cosine similarity: 0.3860
+- Euclidean distance: 0.3860  
+- Dot product: 0.3860
+
+### Embeddings Analysis - Anisotropy Detection
+Analysis of fine-tuned embedding structure:
+- Strong anisotropy detected: only 31 dimensions explain 50% of variance
+- 83.7% of embedding values are near-zero (< 0.05)
+- Embeddings concentrated in low-dimensional subspace
+
+### PCA and PCA Whitening Analysis
+Evaluates dimensionality reduction and decorrelation techniques:
+- **PCA (768 → 256 dims)**: Minor performance loss (-2-3%)
+- **PCA Whitening**: Significant performance degradation (-14-25%)
+- Conclusion: Anisotropic structure is beneficial for code search
+
+Run the full analysis notebook:
+```bash
+jupyter notebook report.ipynb
+```
+
+Additional experiment scripts:
 ```bash
 # Bonus 1: Function names vs whole bodies
-python bonus/bonus1.py
+python src/bonus/bonus1.py
 
 # Bonus 2: Vector storage metrics comparison
-python bonus/bonus2.py
+python src/bonus/bonus2.py
 
 # Compare all results
-python bonus/compare.py
+python src/bonus/compare.py
+
+# Analyze embeddings for anisotropy
+python src/bonus/analyze_embeddings.py
 ```
 
 ## API Usage (Optional)

@@ -1,4 +1,4 @@
-from evaluation.metrics import recall_at_k, mrr_at_k, ndcg_at_k
+from src.evaluation.metrics import recall_at_k, mrr_at_k, ndcg_at_k
 
 
 def test_recall_at_k():

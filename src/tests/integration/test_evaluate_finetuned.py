@@ -1,7 +1,7 @@
 from src.search_engine import SearchEngine
-from evaluation.cosqa_loader import CoSQALoader
-from evaluation.metrics import recall_at_k, mrr_at_k, ndcg_at_k
-from training.config import TrainingConfig
+from src.evaluation.cosqa_loader import CoSQALoader
+from src.evaluation.metrics import recall_at_k, mrr_at_k, ndcg_at_k
+from src.training.config import TrainingConfig
 from typing import Dict, List
 import os
 
