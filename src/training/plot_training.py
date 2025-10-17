@@ -29,7 +29,7 @@ def plot_training_history(history_path: str = "./training_history.json"):
     
     fig2, ax2 = plt.subplots(figsize=(10, 6))
     ax2.plot(epochs, val_ndcg, 'r-o', label='NDCG@10', linewidth=2, markersize=8)
-    ax2.plot(epochs, val_recall, 'g-s', label='Recall@10', linewidth=2, markersize=8)
+    ax2.plot(epochs, val_recall, 'g-s', label='RECALL@10', linewidth=2, markersize=8)
     ax2.plot(epochs, val_mrr, 'm-^', label='MRR@10', linewidth=2, markersize=8)
     ax2.set_xlabel('Epoch', fontsize=12)
     ax2.set_ylabel('Score', fontsize=12)

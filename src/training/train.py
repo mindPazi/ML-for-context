@@ -156,7 +156,7 @@ def train_model(config: TrainingConfig = None):
             val_recall = val_result.get('validation_cosine_recall@10', 0.0)
             val_mrr = val_result.get('validation_cosine_mrr@10', 0.0)
             print(f"  Validation NDCG@10: {val_score:.4f}")
-            print(f"  Validation Recall@10: {val_recall:.4f}")
+            print(f"  Validation RECALL@10: {val_recall:.4f}")
             print(f"  Validation MRR@10: {val_mrr:.4f}")
         else:
             val_score = val_result

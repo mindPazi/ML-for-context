@@ -61,7 +61,7 @@ def evaluate_with_function_names():
     engine_names.index_documents(corpus_names, show_progress=True)
     results_names = run_search(engine_names, queries)
     metrics_names = calculate_metrics(results_names, relevance)
-    print(f"  Recall@10: {metrics_names['recall@10']:.4f}")
+    print(f"  RECALL@10: {metrics_names['recall@10']:.4f}")
     print(f"  MRR@10: {metrics_names['mrr@10']:.4f}")
     print(f"  NDCG@10: {metrics_names['ndcg@10']:.4f}")
     
@@ -73,7 +73,7 @@ def evaluate_with_function_names():
     print("\n" + "="*60)
     print("RESULTS")
     print("="*60)
-    print(f"  Recall@10: {metrics_names['recall@10']:.4f}")
+    print(f"  RECALL@10: {metrics_names['recall@10']:.4f}")
     print(f"  MRR@10:    {metrics_names['mrr@10']:.4f}")
     print(f"  NDCG@10:   {metrics_names['ndcg@10']:.4f}")
     print(f"\nSaved to: bonus/results/function_names.json")
