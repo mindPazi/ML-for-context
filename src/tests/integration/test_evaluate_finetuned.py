@@ -1,6 +1,6 @@
 from src.search_engine import SearchEngine
 from src.evaluation.cosqa_loader import CoSQALoader
-from src.evaluation.metrics import recall_at_k, mrr_at_k, ndcg_at_k
+from src.evaluation.metrics import calculate_metrics
 from src.training.config import TrainingConfig
 from typing import Dict, List
 import os
@@ -35,25 +35,6 @@ def run(search_engine: SearchEngine, queries: List[Dict], top_k: int = 10):
         retrieved_indices = [r["id"] for r in search_results]
         results[query_id] = retrieved_indices
     return results
-
-
-def calculate_metrics(results: Dict, relevance: Dict):
-    recalls = []
-    mrrs = []
-    ndcgs = []
-    
-    for query_id, retrieved in results.items():
-        relevant = relevance[query_id]
-        recalls.append(recall_at_k(relevant, retrieved, k=10))
-        mrrs.append(mrr_at_k(relevant, retrieved, k=10))
-        ndcgs.append(ndcg_at_k(relevant, retrieved, k=10))
-    
-    metrics = {
-        "recall@10": sum(recalls) / len(recalls),
-        "mrr@10": sum(mrrs) / len(mrrs),
-        "ndcg@10": sum(ndcgs) / len(ndcgs)
-    }
-    return metrics
 
 
 def print_results(metrics: Dict, model_name: str):

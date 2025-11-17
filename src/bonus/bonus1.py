@@ -4,7 +4,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from src.search_engine import SearchEngine
 from evaluation.cosqa_loader import CoSQALoader
-from evaluation.metrics import recall_at_k, mrr_at_k, ndcg_at_k
+from evaluation.metrics import calculate_metrics
 from bonus.extractor import extract_function_name
 import json
 from typing import Dict, List
@@ -19,24 +19,6 @@ def run_search(search_engine: SearchEngine, queries: List[Dict], top_k: int = 10
         retrieved_indices = [r["id"] for r in search_results]
         results[query_id] = retrieved_indices
     return results
-
-
-def calculate_metrics(results: Dict, relevance: Dict):
-    recalls = []
-    mrrs = []
-    ndcgs = []
-    
-    for query_id, retrieved in results.items():
-        relevant = relevance[query_id]
-        recalls.append(recall_at_k(relevant, retrieved, k=10))
-        mrrs.append(mrr_at_k(relevant, retrieved, k=10))
-        ndcgs.append(ndcg_at_k(relevant, retrieved, k=10))
-    
-    return {
-        "recall@10": sum(recalls) / len(recalls),
-        "mrr@10": sum(mrrs) / len(mrrs),
-        "ndcg@10": sum(ndcgs) / len(ndcgs)
-    }
 
 
 def evaluate_with_function_names():

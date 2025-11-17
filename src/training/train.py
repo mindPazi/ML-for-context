@@ -82,6 +82,7 @@ def train_model(config: TrainingConfig = None):
     train_loss = losses.MultipleNegativesRankingLoss(model)
     print("\n[Loss Function]")
     print("  Using: MultipleNegativesRankingLoss")
+    print(f"  Temperature (scale): {train_loss.scale}")
     
     print("\n[Validation Setup]")
     val_queries_dict = {q["query_id"]: q["query_text"] for q in val_queries}

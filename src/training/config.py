@@ -31,3 +31,4 @@ class TrainingConfig:
             else:
                 self.device = "cpu"
                 self.use_amp = False
+                self.num_workers = 0  

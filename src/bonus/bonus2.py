@@ -14,6 +14,7 @@ from src.search_engine import SearchEngine
 from src.embeddings import EmbeddingModel
 from src.vector_store import VectorStore
 from src.evaluation.cosqa_loader import CoSQALoader
+from src.evaluation.metrics import calculate_metrics
 
 
 class SearchEngineWithMetric(SearchEngine):
@@ -152,43 +153,6 @@ def run_search(engine: SearchEngineWithMetric, queries: List[Dict], top_k: int =
         retrieved_indices = [r["id"] for r in search_results]
         results[query_id] = retrieved_indices
     return results
-
-
-def calculate_metrics(results: Dict[str, List[int]], relevance: Dict[str, List[int]]):
-    recalls = []
-    mrrs = []
-    ndcgs = []
-    
-    for query_id, retrieved in results.items():
-        relevant = relevance[query_id]
-        
-        pred_set = set(retrieved[:10])
-        truth_set = set(relevant)
-        recalls.append(len(pred_set & truth_set) / len(truth_set) if truth_set else 0)
-        
-        for i, doc_idx in enumerate(retrieved[:10], 1):
-            if doc_idx in truth_set:
-                mrrs.append(1.0 / i)
-                break
-        else:
-            mrrs.append(0.0)
-        
-        dcg = 0
-        for i, doc_idx in enumerate(retrieved[:10], 1):
-            if doc_idx in truth_set:
-                dcg += 1.0 / np.log2(i + 1)
-        
-        idcg = 0
-        for i in range(1, min(len(truth_set), 10) + 1):
-            idcg += 1.0 / np.log2(i + 1)
-        
-        ndcgs.append(dcg / idcg if idcg > 0 else 0)
-    
-    return {
-        "recall@10": sum(recalls) / len(recalls),
-        "mrr@10": sum(mrrs) / len(mrrs),
-        "ndcg@10": sum(ndcgs) / len(ndcgs)
-    }
 
 
 def evaluate(metric_name: str, normalize: bool = True, model_path: str = "./models/unixcoder-finetuned"):
