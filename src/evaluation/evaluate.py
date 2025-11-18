@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../.
 
 from src.search_engine import SearchEngine
 from src.evaluation.cosqa_loader import CoSQALoader
-from src.evaluation.metrics import calculate_metrics
+from src.evaluation.metrics import calculate_metrics, run_queries
 from typing import Dict, List
 import logging
 import argparse
@@ -65,17 +65,6 @@ def index_corpus(
         with open(cache_path, "wb") as f:
             pickle.dump(search_engine.vector_store.embeddings, f)
         log.info(f"      ✓ Cache saved")
-
-
-def run(search_engine: SearchEngine, queries: List[Dict], top_k: int = 10):
-    results = {}
-    for query in queries:
-        query_id = query["query_id"]
-        query_text = query["query_text"]
-        search_results = search_engine.search(query_text, top_k=top_k)
-        retrieved_indices = [r["id"] for r in search_results]
-        results[query_id] = retrieved_indices
-    return results
 
 
 def print_results(metrics: Dict):
@@ -138,7 +127,7 @@ def main():
     index_corpus(search_engine, corpus, args.model, normalize=True)
 
     log.info("\n[4/5] Running queries...")
-    results = run(search_engine, queries, top_k=10)
+    results = run_queries(search_engine, queries, top_k=10)
 
     log.info("\n[5/5] Calculating metrics...")
     metrics = calculate_metrics(results, relevance)

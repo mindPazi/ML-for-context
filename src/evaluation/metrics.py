@@ -1,5 +1,5 @@
 import numpy as np
-from typing import List, Dict
+from typing import List, Dict, Any
 
 
 def recall_at_k(
@@ -31,6 +31,17 @@ def ndcg_at_k(
     )
     idcg = sum(1.0 / np.log2(rank + 2) for rank in range(min(len(relevant_docs), k)))
     return dcg / idcg if idcg > 0 else 0.0
+
+
+def run_queries(search_engine: Any, queries: List[Dict], top_k: int = 10) -> Dict:
+    results = {}
+    for query in queries:
+        query_id = query["query_id"]
+        query_text = query["query_text"]
+        search_results = search_engine.search(query_text, top_k=top_k)
+        retrieved_indices = [r["id"] for r in search_results]
+        results[query_id] = retrieved_indices
+    return results
 
 
 def calculate_metrics(results: Dict, relevance: Dict) -> Dict:

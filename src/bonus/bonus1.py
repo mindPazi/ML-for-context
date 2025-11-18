@@ -4,21 +4,10 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from src.search_engine import SearchEngine
 from evaluation.cosqa_loader import CoSQALoader
-from evaluation.metrics import calculate_metrics
+from evaluation.metrics import calculate_metrics, run_queries
 from bonus.extractor import extract_function_name
 import json
 from typing import Dict, List
-
-
-def run_search(search_engine: SearchEngine, queries: List[Dict], top_k: int = 10):
-    results = {}
-    for query in queries:
-        query_id = query["query_id"]
-        query_text = query["query_text"]
-        search_results = search_engine.search(query_text, top_k=top_k)
-        retrieved_indices = [r["id"] for r in search_results]
-        results[query_id] = retrieved_indices
-    return results
 
 
 def evaluate_with_function_names():
@@ -41,7 +30,7 @@ def evaluate_with_function_names():
     print("\n[3/3] Evaluating with function names...")
     engine_names = SearchEngine(model_name=model_path)
     engine_names.index_documents(corpus_names, show_progress=True)
-    results_names = run_search(engine_names, queries)
+    results_names = run_queries(engine_names, queries)
     metrics_names = calculate_metrics(results_names, relevance)
     print(f"  RECALL@10: {metrics_names['recall@10']:.4f}")
     print(f"  MRR@10: {metrics_names['mrr@10']:.4f}")
