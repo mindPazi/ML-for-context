@@ -96,7 +96,7 @@ def train_model(config: TrainingConfig = None):
         corpus=corpus_dict,
         relevant_docs=val_qrels_subset,
         name="validation",
-        show_progress_bar=False,
+        show_progress_bar=True,
         score_function=SimilarityFunction.MANHATTAN,
     )
     print(f"  Validation queries: {len(val_queries_dict)}")
