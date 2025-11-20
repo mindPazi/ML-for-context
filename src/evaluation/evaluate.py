@@ -1,6 +1,7 @@
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 from src.search_engine import SearchEngine
 from src.evaluation.cosqa_loader import CoSQALoader
@@ -12,49 +13,86 @@ import os
 import hashlib
 import pickle
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(message)s")
 log = logging.getLogger(__name__)
+
+
+def deduplicate_evaluation(
+    corpus: List[str], queries: List[Dict], relevance: Dict
+) -> tuple:
+    from collections import defaultdict
+
+    text_to_old_indices = defaultdict(list)
+    for idx, text in enumerate(corpus):
+        text_to_old_indices[text].append(idx)
+
+    new_corpus = list(text_to_old_indices.keys())
+
+    old_to_new = {}
+    for new_idx, (text, old_indices) in enumerate(text_to_old_indices.items()):
+        for old_idx in old_indices:
+            old_to_new[old_idx] = new_idx
+
+    new_relevance = {}
+    for query_id, old_relevant_docs in relevance.items():
+        new_relevant_docs = set()
+        for old_idx in old_relevant_docs:
+            new_idx = old_to_new[old_idx]
+            new_relevant_docs.add(new_idx)
+        new_relevance[query_id] = list(new_relevant_docs)
+
+    log.info(
+        f"      Deduplication: {len(corpus)} → {len(new_corpus)} documents ({len(corpus) - len(new_corpus)} removed)"
+    )
+
+    return new_corpus, queries, new_relevance
 
 
 def get_cache_path(model_name: str, corpus_size: int, normalize: bool = True) -> str:
     cache_dir = "./cache/embeddings"
     os.makedirs(cache_dir, exist_ok=True)
-    
-    
+
     if "microsoft/unixcoder-base" in model_name:
         cache_file = f"{cache_dir}/embedding_base.pkl.npz"
-    elif "./models/unixcoder-finetuned" in model_name or "unixcoder-finetuned" in model_name:
+    elif (
+        "./models/unixcoder-finetuned" in model_name
+        or "unixcoder-finetuned" in model_name
+    ):
         norm_str = "normalized" if normalize else "notnormalized"
         cache_file = f"{cache_dir}/embeddings_finetuned_{norm_str}.pkl.npz"
     else:
-        
+
         model_hash = hashlib.md5(model_name.encode()).hexdigest()[:8]
         norm_str = "normalized" if normalize else "notnormalized"
         cache_file = f"{cache_dir}/embeddings_{model_hash}_{norm_str}.pkl.npz"
-    
+
     return cache_file
 
 
-def index_corpus(search_engine: SearchEngine, corpus: List[str], model_name: str, normalize: bool = True):
+def index_corpus(
+    search_engine: SearchEngine,
+    corpus: List[str],
+    model_name: str,
+    normalize: bool = True,
+):
     cache_path = get_cache_path(model_name, len(corpus), normalize)
-    
+
     if os.path.exists(cache_path):
         log.info(f"      Loading from cache: {cache_path}")
-        with open(cache_path, 'rb') as f:
+        with open(cache_path, "rb") as f:
             embeddings = pickle.load(f)
         search_engine.vector_store.embeddings = embeddings
         search_engine.vector_store.documents = corpus
-        search_engine.vector_store.metadata = [{"doc_id": i} for i in range(len(corpus))]
+        search_engine.vector_store.metadata = [
+            {"doc_id": i} for i in range(len(corpus))
+        ]
         log.info(f"      ✓ Loaded {len(corpus)} documents from cache")
     else:
         log.info(f"      Computing embeddings...")
         search_engine.index_documents(corpus, show_progress=True)
-        
+
         log.info(f"      Saving to cache: {cache_path}")
-        with open(cache_path, 'wb') as f:
+        with open(cache_path, "wb") as f:
             pickle.dump(search_engine.vector_store.embeddings, f)
         log.info(f"      ✓ Cache saved")
 
@@ -74,61 +112,65 @@ def calculate_metrics(results: Dict, relevance: Dict):
     recalls = []
     mrrs = []
     ndcgs = []
-    
+
     for query_id, retrieved in results.items():
         relevant = relevance[query_id]
         recalls.append(recall_at_k(relevant, retrieved, k=10))
         mrrs.append(mrr_at_k(relevant, retrieved, k=10))
         ndcgs.append(ndcg_at_k(relevant, retrieved, k=10))
-    
+
     metrics = {
         "recall@10": sum(recalls) / len(recalls),
         "mrr@10": sum(mrrs) / len(mrrs),
-        "ndcg@10": sum(ndcgs) / len(ndcgs)
+        "ndcg@10": sum(ndcgs) / len(ndcgs),
     }
     return metrics
 
 
 def print_results(metrics: Dict):
-    log.info("\n" + "="*50)
+    log.info("\n" + "=" * 50)
     log.info("EVALUATION RESULTS".center(50))
-    log.info("="*50)
+    log.info("=" * 50)
     for metric_name, value in metrics.items():
         log.info(f"  {metric_name.upper():<20} {value:.4f}")
-    log.info("="*50)
+    log.info("=" * 50)
 
 
 def main():
-    
-    
-    parser = argparse.ArgumentParser(description="Evaluate embedding model on CoSQA dataset")
+
+    parser = argparse.ArgumentParser(
+        description="Evaluate embedding model on CoSQA dataset"
+    )
     parser.add_argument(
         "--model",
         type=str,
         default="microsoft/unixcoder-base",
-        help="Model to evaluate (base model name or path to fine-tuned model)"
+        help="Model to evaluate (base model name or path to fine-tuned model)",
     )
     parser.add_argument(
         "--test-subset",
         type=float,
         default=1.0,
-        help="Fraction of test queries to evaluate (0.0-1.0). Default: 1.0 (100%%)"
+        help="Fraction of test queries to evaluate (0.0-1.0). Default: 1.0 (100%%)",
     )
     args = parser.parse_args()
-    
-    log.info("\n" + "="*50)
+
+    log.info("\n" + "=" * 50)
     log.info("CoSQA EVALUATION PIPELINE".center(50))
-    log.info("="*50)
+    log.info("=" * 50)
     log.info(f"\nModel: {args.model}")
-    
+
     log.info("\n[1/5] Loading dataset...")
     loader = CoSQALoader()
     corpus, queries, relevance = loader.load(split="test")
     log.info(f"      ├─ Corpus size: {len(corpus)}")
     log.info(f"      └─ Total queries: {len(queries)}")
-    
+
+    corpus, queries, relevance = deduplicate_evaluation(corpus, queries, relevance)
+
     if args.test_subset < 1.0:
         import random
+
         random.seed(42)
         total_queries = len(queries)
         subset_size = int(total_queries * args.test_subset)
@@ -136,21 +178,23 @@ def main():
         queries = queries[:subset_size]
         query_ids = {q["query_id"] for q in queries}
         relevance = {qid: docs for qid, docs in relevance.items() if qid in query_ids}
-        log.info(f"      └─ Using {args.test_subset*100:.0f}% of queries: {len(queries)}/{total_queries}")
-    
+        log.info(
+            f"      └─ Using {args.test_subset*100:.0f}% of queries: {len(queries)}/{total_queries}"
+        )
+
     log.info("\n[2/5] Initializing search engine...")
     search_engine = SearchEngine(model_name=args.model)
-    
+
     log.info("\n[3/5] Indexing corpus...")
-    
+
     index_corpus(search_engine, corpus, args.model, normalize=True)
-    
+
     log.info("\n[4/5] Running queries...")
     results = run(search_engine, queries, top_k=10)
-    
+
     log.info("\n[5/5] Calculating metrics...")
     metrics = calculate_metrics(results, relevance)
-    
+
     print_results(metrics)
 
 
