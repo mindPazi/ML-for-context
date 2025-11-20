@@ -1,5 +1,6 @@
 from datetime import datetime
 from sentence_transformers import SentenceTransformer, losses, evaluation
+from sentence_transformers.evaluation import SimilarityFunction
 from torch.utils.data import DataLoader
 import torch
 import json
@@ -96,6 +97,7 @@ def train_model(config: TrainingConfig = None):
         relevant_docs=val_qrels_subset,
         name="validation",
         show_progress_bar=False,
+        score_function=SimilarityFunction.MANHATTAN,
     )
     print(f"  Validation queries: {len(val_queries_dict)}")
     print(f"  Validation corpus: {len(corpus_dict)}")
@@ -154,9 +156,9 @@ def train_model(config: TrainingConfig = None):
         val_result = evaluator(model, output_path=None, epoch=epoch, steps=-1)
 
         if isinstance(val_result, dict):
-            val_score = val_result.get("validation_cosine_ndcg@10", 0.0)
-            val_recall = val_result.get("validation_cosine_recall@10", 0.0)
-            val_mrr = val_result.get("validation_cosine_mrr@10", 0.0)
+            val_score = val_result.get("validation_manhattan_ndcg@10", 0.0)
+            val_recall = val_result.get("validation_manhattan_recall@10", 0.0)
+            val_mrr = val_result.get("validation_manhattan_mrr@10", 0.0)
             print(f"  Validation NDCG@10: {val_score:.4f}")
             print(f"  Validation RECALL@10: {val_recall:.4f}")
             print(f"  Validation MRR@10: {val_mrr:.4f}")
