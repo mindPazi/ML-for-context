@@ -9,29 +9,52 @@ from src.training.config import TrainingConfig
 def deduplicate_training_data(
     corpus: List[str], queries: List[Dict], qrels: Dict
 ) -> Tuple[List[str], List[Dict], Dict]:
-    seen_texts = {}
+
+    query_text_seen = {}
+    unique_queries = []
+
+    for query in queries:
+        qid = query["query_id"]
+        qtext = query["query_text"]
+
+        if qid in qrels:
+            if qtext not in query_text_seen:
+                query_text_seen[qtext] = query
+                unique_queries.append(query)
+
+    print(
+        f"      Query deduplication: {len(queries)} → {len(unique_queries)} queries ({len(queries) - len(unique_queries)} removed)"
+    )
+
+    text_to_indices = {}
+    for idx, text in enumerate(corpus):
+        if text not in text_to_indices:
+            text_to_indices[text] = []
+        text_to_indices[text].append(idx)
+
     unique_corpus = []
     old_to_new = {}
 
-    for old_idx, text in enumerate(corpus):
-        if text not in seen_texts:
-            new_idx = len(unique_corpus)
-            seen_texts[text] = new_idx
-            unique_corpus.append(text)
+    for text, indices in text_to_indices.items():
+        new_idx = len(unique_corpus)
+        unique_corpus.append(text)
+
+        for old_idx in indices:
             old_to_new[old_idx] = new_idx
-        else:
-            old_to_new[old_idx] = seen_texts[text]
 
     new_qrels = {}
+    kept_query_ids = {q["query_id"] for q in unique_queries}
+
     for qid, doc_indices in qrels.items():
-        new_indices = list(set(old_to_new[idx] for idx in doc_indices))
-        new_qrels[qid] = new_indices
+        if qid in kept_query_ids:
+            new_indices = [old_to_new[idx] for idx in doc_indices]
+            new_qrels[qid] = new_indices
 
     print(
-        f"      Deduplication: {len(corpus)} → {len(unique_corpus)} documents ({len(corpus) - len(unique_corpus)} removed)"
+        f"      Document deduplication: {len(corpus)} → {len(unique_corpus)} documents ({len(corpus) - len(unique_corpus)} removed)"
     )
 
-    return unique_corpus, queries, new_qrels
+    return unique_corpus, unique_queries, new_qrels
 
 
 def prepare_data(

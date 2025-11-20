@@ -6,61 +6,63 @@ from .vector_store import VectorStore
 
 class SearchEngine:
     def __init__(
-        self, 
+        self,
         model_name: str = "microsoft/unixcoder-base",
         max_seq_length: int = 256,
-        device: Optional[str] = None
+        device: Optional[str] = None,
     ):
         self.embedding_model = EmbeddingModel(
-            model_name=model_name,
-            max_seq_length=max_seq_length,
-            device=device
+            model_name=model_name, max_seq_length=max_seq_length, device=device
         )
-        self.vector_store = VectorStore(embedding_dim=self.embedding_model.get_embedding_dim())
-    
+        self.vector_store = VectorStore(
+            embedding_dim=self.embedding_model.get_embedding_dim()
+        )
+
     def index_documents(
-        self, 
-        documents: List[str], 
+        self,
+        documents: List[str],
         metadata: Optional[List[Dict]] = None,
-        show_progress: bool = False
+        show_progress: bool = False,
     ) -> int:
         embeddings = self.embedding_model.encode(
-            documents, 
-            batch_size=32,
-            show_progress_bar=show_progress
+            documents, batch_size=32, show_progress_bar=show_progress
         )
         return self.vector_store.add_documents(documents, embeddings, metadata)
-    
+
     def search(self, query: str, top_k: int = 10) -> List[Dict[str, Any]]:
-        if self.vector_store.embeddings is None or len(self.vector_store.embeddings) == 0:
+        if (
+            self.vector_store.embeddings is None
+            or len(self.vector_store.embeddings) == 0
+        ):
             return []
-        
-        query_embedding = self.embedding_model.encode(query, batch_size=1, show_progress_bar=False)
-        
-        
-        distances = np.sum(np.abs(self.vector_store.embeddings - query_embedding), axis=1)
-        top_indices = np.argsort(distances)[:top_k]
-        
+
+        query_embedding = self.embedding_model.encode(
+            query, batch_size=1, show_progress_bar=False
+        )
+
+        similarities = np.dot(self.vector_store.embeddings, query_embedding.T).squeeze()
+        top_indices = np.argsort(similarities)[::-1][:top_k]
+
         results = []
         for idx in top_indices:
             result = {
                 "id": int(idx),
                 "text": self.vector_store.documents[idx],
-                "score": float(distances[idx]),
-                "metadata": self.vector_store.metadata[idx]
+                "score": float(similarities[idx]),
+                "metadata": self.vector_store.metadata[idx],
             }
             results.append(result)
-        
+
         return results
-    
+
     def clear(self):
         self.vector_store.delete_collection()
-    
+
     def info(self) -> Dict:
         return self.vector_store.get_collection_info()
-    
+
     def save(self, path: str):
         self.vector_store.save(path)
-    
+
     def load(self, path: str):
         self.vector_store.load(path)
