@@ -126,10 +126,10 @@ python -m src.evaluation.evaluate --model ./models/unixcoder-finetuned
 python -m src.tests.integration.test_evaluate_finetuned
 ```
 
-Fine-tuned results (Manhattan distance with normalized embeddings):
-- Recall@10: 0.4260 (+92% improvement over baseline)
-- MRR@10: 0.1621 (+82% improvement)
-- NDCG@10: 0.2234 (+87% improvement)
+Fine-tuned results (Cosine similarity with normalized embeddings, deduplicated corpus):
+- Recall@10: 0.7560
+- MRR@10: 0.4791
+- NDCG@10: 0.5452
 
 ### 4. Run Integration Tests
 
@@ -180,11 +180,11 @@ Evaluates search performance using only extracted function names instead of full
 - Demonstrates importance of full code context
 
 ### Bonus 2: Similarity Metrics Comparison
-Compares different distance metrics with normalized/unnormalized embeddings:
-- **Best**: Manhattan distance with normalized embeddings (Recall@10: 0.4260)
-- Cosine similarity: 0.3860
-- Euclidean distance: 0.3860  
-- Dot product: 0.3860
+Compares different distance metrics with normalized/unnormalized embeddings (deduplicated corpus):
+- **Best**: Cosine similarity with normalized embeddings (Recall@10: 0.7560)
+- Manhattan distance: 0.7480
+- PCA: 0.7560
+- PCA Whitening: 0.7500
 
 ### Embeddings Analysis - Anisotropy Detection
 Analysis of fine-tuned embedding structure:
@@ -193,10 +193,11 @@ Analysis of fine-tuned embedding structure:
 - Embeddings concentrated in low-dimensional subspace
 
 ### PCA and PCA Whitening Analysis
-Evaluates dimensionality reduction and decorrelation techniques:
-- **PCA (768 → 256 dims)**: Minor performance loss (-2-3%)
-- **PCA Whitening**: Significant performance degradation (-14-25%)
-- Conclusion: Anisotropic structure is beneficial for code search
+Evaluates dimensionality reduction and decorrelation techniques (deduplicated corpus):
+- **Baseline**: Recall@10: 0.7560, MRR@10: 0.4791, NDCG@10: 0.5452
+- **PCA**: Recall@10: 0.7560, MRR@10: 0.4793, NDCG@10: 0.5454 (no loss)
+- **PCA Whitening**: Recall@10: 0.7500, MRR@10: 0.4772, NDCG@10: 0.5428 (-0.8% recall)
+- Conclusion: PCA maintains performance, whitening causes minor degradation
 
 Run the full analysis notebook:
 ```bash

@@ -3,14 +3,18 @@ import numpy as np
 from sklearn.decomposition import PCA
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '.')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from src.embeddings import EmbeddingModel
 from src.evaluation.cosqa_loader import CoSQALoader
+from src.evaluation.evaluate import deduplicate_evaluation
 
 print("Loading test set...")
 loader = CoSQALoader()
 corpus, queries, relevance = loader.load(split='test')
-print(f"Loaded {len(corpus)} documents and {len(queries)} queries")
+
+print("Deduplicating...")
+corpus, queries, relevance = deduplicate_evaluation(corpus, queries, relevance)
+print(f"Loaded {len(corpus)} documents (deduplicated) and {len(queries)} queries")
 
 print("\nLoading cached embeddings...")
 with open('./cache/embeddings/embeddings_finetuned_normalized.pkl.npz', 'rb') as f:
